@@ -11,7 +11,7 @@ pygmentscodefences = true
 pygmentscodefencesguesssyntax = true
 
 googleAnalytics = "UA-123-45"
-disqusShortname = "ink-demo"
+disqusShortname = "dequeue-blog"
 
 [params]
 	subtitle = "A Web Developer"
@@ -21,7 +21,7 @@ disqusShortname = "ink-demo"
 
 	# Content types to disable Disqus on.
 	disableDisqusTypes = [""]
-	
+
 	featherIconsCDN = true
 
 	mode = "auto" # "dark" or "auto"
