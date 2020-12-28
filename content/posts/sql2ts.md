@@ -1,6 +1,6 @@
 ---
 title: "利用PEG.JS从SQL生成模型类型签名"
-date: "2020-07-04"
+date: "2020-12-28"
 description: "介绍Swagger以及OpenAPI简易教程"
 tags: [OpenAPI]
 ---
@@ -24,7 +24,7 @@ interface profile {
   location: string // country-province-city
   signature: string // signature text
   avatar: string // user avatar url
-}
+} 
 ```
 
 ### PEG.JS 简介
@@ -83,8 +83,58 @@ integer "integer"
 ↑ 14 => additive:['2*(3+4)'] => start
 ```
 
+#### SQL DDL的结构
 
+大致上，建表语句的声明大致为三部分，
+- 数据表本身相关声明 (表名， 所用字符集，备用注释等)
+- 表中列的相关声明 (列明，使用类型，相关注释等)
+- 需要建立的索引(索引名字, 索引类型)
+
+对于我们的目标来说, 生成ts声明, 需要关注的只有表名，列名，列的类型, 由此思路，我们可以构造简单的如下PEGJS语法规则来制导
+
+```ts
+start=Sqls EOF
+
+Sqls = (TableDef / CommentLine / NoCreateStat) +
+
+TableDef
+  = _ "CREATE"i _ "TABLE"i _ tbName:field _ "(" cols:ColsDef keys:KeyStats? ")" tbEnd:TableEnd ";" _ {
+    return {tableName: tbName, cols: cols, keys: keys, comment: tbEnd.comment}
+}
+  
+
+ColDef 
+  = _ colName:field _ type:type typeModify? _ colsModify comment:comment? ","? _ {
+  return {colName: colName, type:type, comment: comment || ""}
+}
+
+```
+> [完整规则可见](https://raw.githubusercontent.com/zhenhuaa/sql2ts/master/src/lib/sql2ts.pegjs)
+
+#### SQL规则的解释
+这次我们利用PEGJS生成parser对识别后，直接返回一个AST来存储解析的结果, 对于create table语句的解析，最终我们会返回如下一个结构。
+```js
+TABLE_DEF
+= {tableName: "profile", cols: COLS, keys: KEYS, comment: "user profile"}
+
+COLS =  [
+      {
+          "colName": "roleId",
+          "type": "bigint",
+          "comment": "playerId"
+      }
+]
+```
+
+#### 遍历AST来生成
+有了AST结构，最终生成interface就非常简单, 我们只要遍历ast结构, 对于列中不同的COL的类型做一次映射，转换成ts支持的类型即可, 比如bigint转换成number， varcahr转换成string等等
+
+### 制作成web工具
+由于PEGJS生产的parser是纯js，我们可以很方便的制作成web版工具，运行在浏览器中,
+![image.png](https://i.loli.net/2020/12/28/Ag8lC2Y3ZIPzJRx.png)
+我们用REACT工具栈左右设置各放置一个aceEditor组件， 然后自动监听坐标组件文本变化，来生成右边内容即可,制作完成后的的 [在线工具地址](https://zhenhuaa.github.io/sql2ts/)
 
 ### 参考
 - [1] [PEG文法](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
 - [2] [PEG.JS官方文档](https://pegjs.org/documentation)
+- [3] [AST抽象语法树](https://zh.wikipedia.org/wiki/%E6%8A%BD%E8%B1%A1%E8%AA%9E%E6%B3%95%E6%A8%B9)
