@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# clean old public dist
-rm -rf public
-
-# add sub module
-git submodule add git@github.com:zhenhuaa/zhenhuaa.github.io.git public
-git config user.name  "zhenhua.wang"
-git config user.email "wangzhenhuaa@gmail.com"
-
 echo -e "\033[0;32mDeploying updates to GitHub...\033[0m"
 
 # Build the project.
